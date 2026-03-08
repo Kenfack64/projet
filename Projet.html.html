@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Switch CM – Présentation immersive</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Poppins', Roboto, sans-serif;
+    }
+
+    body {
+      background: #0a0f1e;
+      color: #fff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* PARTICULES AMÉLIORÉES (avec traînées) */
+    #particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* FLASH DE TRANSITION */
+    #flash {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: black;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5000;
+      transition: opacity 0.7s ease;
+    }
+
+    /* ÉCRAN DE DÉMARRAGE */
+    #startScreen {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 30%, #162b4d, #030614);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 6000;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #startScreen h1 {
+      font-size: 4.5rem;
+      color: #00eaff;
+      text-shadow: 0 0 30px #00eaff, 0 0 60px #0077ff;
+      letter-spacing: 4px;
+      animation: pulseGlow 2s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0% { text-shadow: 0 0 20px #00eaff, 0 0 40px #0077ff; }
+      50% { text-shadow: 0 0 40px #00eaff, 0 0 80px #0077ff; }
+      100% { text-shadow: 0 0 20px #00eaff, 0 0 40px #0077ff; }
+    }
+
+    #startScreen p {
+      font-size: 1.6rem;
+      margin: 20px 0;
+      color: #ccddee;
+    }
+
+    .start-btn {
+      padding: 18px 60px;
+      border: none;
+      border-radius: 60px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #00eaff, #0077ff);
+      color: #0a0f1e;
+      cursor: pointer;
+      box-shadow: 0 0 30px #00eaff;
+      transition: transform 0.3s, box-shadow 0.3s;
+      margin-top: 30px;
+      text-transform: uppercase;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 60px #00eaff;
+    }
+
+    /* SECTIONS */
+    .section {
+      position: absolute;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2%;
+      opacity: 0;
+      transform: scale(1.1) translateY(30px);
+      transition: opacity 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .section.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* CONTENEUR DUAL */
+    .dual-container {
+      display: flex;
+      width: 100%;
+      max-width: 1500px;
+      height: 85vh;
+      background: rgba(5, 10, 20, 0.4);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border-radius: 60px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.8), 0 0 0 2px rgba(0,234,255,0.2) inset;
+      border: 1px solid rgba(0,234,255,0.3);
+      transition: box-shadow 0.5s;
+    }
+
+    .dual-container:hover {
+      box-shadow: 0 50px 100px rgba(0,234,255,0.2), 0 0 0 3px #00eaff inset;
+    }
+
+    /* COLONNE IMAGE */
+    .image-col {
+      flex: 1.3;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+      transition: transform 10s ease;
+      transform: scale(1.05);
+    }
+
+    .active .image-col {
+      transform: scale(1);
+    }
+
+    .image-col::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
+      pointer-events: none;
+    }
+
+    /* COLONNE TEXTE */
+    .text-col {
+      flex: 1;
+      background: rgba(8, 15, 25, 0.85);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px 45px;
+      color: white;
+      border-left: 4px solid #00eaff;
+      box-shadow: -20px 0 30px rgba(0,0,0,0.5);
+      overflow-y: auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ANIMATION DES TEXTES À L'APPARITION */
+    .active .text-col * {
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* STYLES TEXTE */
+    .text-col h2 {
+      font-size: 3rem;
+      color: #00eaff;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px #00eaff;
+      letter-spacing: 2px;
+    }
+
+    .text-col h3 {
+      font-size: 2rem;
+      margin: 20px 0 10px;
+      color: #fff;
+    }
+
+    .text-col p {
+      font-size: 1.3rem;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .badge {
+      background: linear-gradient(45deg, #00eaff, #0077ff);
+      color: #0a0f1e;
+      padding: 6px 18px;
+      border-radius: 40px;
+      font-weight: 700;
+      display: inline-block;
+      margin: 5px 10px 5px 0;
+      font-size: 1.1rem;
+      box-shadow: 0 0 15px #00eaff;
+    }
+
+    .grid-mini {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .card-mini {
+      background: rgba(255,255,255,0.05);
+      border-radius: 25px;
+      padding: 20px 10px;
+      border: 1px solid rgba(0,234,255,0.3);
+      text-align: center;
+      transition: all 0.4s;
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+    }
+
+    .card-mini:hover {
+      border-color: #00eaff;
+      box-shadow: 0 0 30px #00eaff55;
+      transform: translateY(-8px) scale(1.02);
+    }
+
+    .card-mini i {
+      color: #00eaff;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .card-mini .price {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #00eaff;
+    }
+
+    .list-bullet {
+      list-style: none;
+      padding-left: 0;
+    }
+    .list-bullet li {
+      margin-bottom: 12px;
+      font-size: 1.3rem;
+    }
+    .list-bullet li i {
+      color: #00eaff;
+      width: 30px;
+      font-size: 1.4rem;
+    }
+
+    .team-mini {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 15px 0;
+    }
+    .team-mini div {
+      background: rgba(0,0,0,0.5);
+      padding: 12px;
+      border-radius: 20px;
+      border-left: 5px solid #00eaff;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .financial-mini {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      background: rgba(0,234,255,0.1);
+      border-radius: 40px;
+      padding: 20px;
+      margin: 25px 0;
+      border: 1px solid #00eaff;
+    }
+    .financial-item {
+      text-align: center;
+    }
+    .financial-item .value {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #00eaff;
+    }
+
+    /* PROGRESS BAR + CONTROLES */
+    #progressContainer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      z-index: 7000;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00eaff, #0077ff);
+      box-shadow: 0 0 20px #00eaff;
+      transition: width 0.1s linear;
+    }
+
+    /* BOUTONS DE CONTRÔLE */
+    .control-bar {
+      position: fixed;
+      bottom: 30px;
+      right: 100px;
+      display: flex;
+      gap: 20px;
+      z-index: 8000;
+      background: rgba(0,0,0,0.4);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      padding: 12px 25px;
+      border-radius: 60px;
+      border: 1px solid #00eaff;
+      box-shadow: 0 0 30px #00eaff55;
+    }
+
+    .control-btn {
+      background: transparent;
+      border: none;
+      color: #00eaff;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .control-btn:hover {
+      background: #00eaff22;
+      transform: scale(1.1);
+      text-shadow: 0 0 15px #00eaff;
+    }
+
+    #pausePlayBtn i {
+      font-size: 2rem;
+    }
+
+    /* INDICATEUR DE SLIDE */
+    .slide-indicator {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      background: rgba(0,0,0,0.5);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: 40px;
+      color: #00eaff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      border: 1px solid #00eaff;
+      z-index: 8000;
+      letter-spacing: 2px;
+    }
+
+    /* FLÈCHES DE NAVIGATION (optionnelles) */
+    .nav-arrow {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.3);
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+      border: none;
+      color: #00eaff;
+      font-size: 3rem;
+      cursor: pointer;
+      z-index: 8000;
+      padding: 20px 15px;
+      border-radius: 0 20px 20px 0;
+      transition: 0.3s;
+      border-left: 3px solid #00eaff;
+    }
+    .nav-arrow:hover {
+      background: #00eaff33;
+      padding-left: 25px;
+    }
+    #arrowLeft { left: 0; }
+    #arrowRight { right: 0; border-radius: 20px 0 0 20px; border-left: none; border-right: 3px solid #00eaff; }
+
+    /* RESPONSIVE */
+    @media (max-width: 800px) {
+      .dual-container { flex-direction: column; height: auto; }
+      .image-col { height: 250px; }
+      .control-bar { right: 20px; bottom: 80px; }
+      .slide-indicator { left: 20px; bottom: 80px; }
+      .nav-arrow { font-size: 2rem; padding: 15px 10px; }
+    }
+
+    /* Personnalisation scroll */
+    .text-col::-webkit-scrollbar { width: 6px; }
+    .text-col::-webkit-scrollbar-thumb { background: #00eaff; border-radius: 10px; }
+
+    /* Images de fond par slide (suppression des inline styles) */
+    #slide1 .image-col { background-image: url('https://images.pexels.com/photos/3398689/pexels-photo-3398689.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide2 .image-col { background-image: url('https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide3 .image-col { background-image: url('https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide4 .image-col { background-image: url('https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide5 .image-col { background-image: url('https://images.pexels.com/photos/8729579/pexels-photo-8729579.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide6 .image-col { background-image: url('https://images.pexels.com/photos/7092613/pexels-photo-7092613.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide7 .image-col { background-image: url('https://images.pexels.com/photos/6694542/pexels-photo-6694542.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide8 .image-col { background-image: url('https://images.pexels.com/photos/3184296/pexels-photo-3184296.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide9 .image-col { background-image: url('https://images.pexels.com/photos/6646918/pexels-photo-6646918.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide10 .image-col { background-image: url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide11 .image-col { background-image: url('https://images.pexels.com/photos/6694542/pexels-photo-6694542.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide12 .image-col { background-image: url('https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide13 .image-col { background-image: url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide14 .image-col { background-image: url('https://images.pexels.com/photos/8729579/pexels-photo-8729579.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide15 .image-col { background-image: url('https://images.pexels.com/photos/196655/pexels-photo-196655.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide16 .image-col { background-image: url('https://images.pexels.com/photos/6646918/pexels-photo-6646918.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+    #slide17 .image-col { background-image: url('https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'); }
+  </style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div id="flash"></div>
+
+<div id="startScreen">
+  <h1>DIGITAL SWITCH CM</h1>
+  <p>Votre partenaire pour la transformation numérique au Cameroun</p>
+  <button class="start-btn" onclick="startPresentation()">Démarrer la présentation</button>
+</div>
+
+<!-- AUDIO -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
+
+<!-- BARRE DE CONTRÔLE -->
+<div class="control-bar">
+  <button class="control-btn" id="pausePlayBtn" onclick="togglePause()" aria-label="Pause"><i class="fas fa-pause"></i></button>
+  <button class="control-btn" onclick="nextSlide()" aria-label="Slide suivante"><i class="fas fa-step-forward"></i></button>
+</div>
+<div class="slide-indicator" id="slideIndicator">01 / 17</div>
+
+<!-- FLÈCHES NAVIGATION -->
+<button class="nav-arrow" id="arrowLeft" onclick="prevSlide()" aria-label="Slide précédente"><i class="fas fa-chevron-left"></i></button>
+<button class="nav-arrow" id="arrowRight" onclick="nextSlide()" aria-label="Slide suivante"><i class="fas fa-chevron-right"></i></button>
+
+<!-- SLIDES (17) avec images mises à jour et plus percutantes -->
+<section class="section" id="slide1">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Digital Switch CM</h2>
+      <p style="font-size:2rem; font-weight:300;">Digitaliser les PME camerounaises</p>
+      <p><strong>Mission :</strong> offrir des outils digitaux accessibles et un accompagnement stratégique.</p>
+      <p><span class="badge">8 jeunes diplômés</span> <span class="badge">Objectif 60% des PME d'ici 2027</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide2">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Problème identifié</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-times-circle"></i> Majorité des PME sans site web</li>
+        <li><i class="fas fa-times-circle"></i> Écoles, églises, commerces absents du digital</li>
+        <li><i class="fas fa-times-circle"></i> Jeunes entrepreneurs sans cadre ni stratégie</li>
+        <li><i class="fas fa-times-circle"></i> Accès au financement difficile sans structuration</li>
+      </ul>
+      <p><strong>Résultat :</strong> des entreprises invisibles en ligne.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide3">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Notre solution</h2>
+      <p><span class="badge">🔵 Digitalisation PME</span> <span class="badge">🟠 Programme "De l'idée au projet"</span> <span class="badge">🟢 Modèle inclusif</span></p>
+      <p>Accompagnement global : site web, app, SEO, formation, coaching, financement.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide4">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Solutions digitales</h2>
+      <div class="grid-mini">
+        <div class="card-mini"><i class="fas fa-globe"></i> Site vitrine<br><span class="price">75k</span></div>
+        <div class="card-mini"><i class="fas fa-briefcase"></i> Site pro<br><span class="price">150k</span></div>
+        <div class="card-mini"><i class="fas fa-shopping-cart"></i> E‑commerce<br><span class="price">240k</span></div>
+        <div class="card-mini"><i class="fas fa-mobile-alt"></i> App mobile<br><span class="price">200k/mois</span></div>
+        <div class="card-mini"><i class="fas fa-chart-line"></i> SEO<br><span class="price">35k/mois</span></div>
+        <div class="card-mini"><i class="fas fa-facebook"></i> Réseaux sociaux<br>Stratégie</div>
+      </div>
+      <p>+ maintenance, sécurité, publicité en ligne.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide5">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Pôles stratégiques complémentaires</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-building"></i> <strong>Immobilier :</strong> mise en relation, vente terrains, digitalisation promoteurs</li>
+        <li><i class="fas fa-gavel"></i> <strong>Juridique :</strong> formalisation, sécurisation transactions</li>
+        <li><i class="fas fa-microphone-alt"></i> <strong>Art oratoire :</strong> formation prise de parole, coaching leadership</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide6">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Programme "De l'idée au projet finançable"</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-lightbulb"></i> Structuration des idées</li>
+        <li><i class="fas fa-file-alt"></i> Mini business plan</li>
+        <li><i class="fas fa-chalkboard-teacher"></i> Coaching stratégique</li>
+        <li><i class="fas fa-hand-holding-usd"></i> Orientation vers financement (Leadcom)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide7">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Modèle économique</h2>
+      <div class="grid-mini">
+        <div class="card-mini">Site vitrine<br>75k</div>
+        <div class="card-mini">Site pro<br>150k</div>
+        <div class="card-mini">E-commerce<br>240k</div>
+        <div class="card-mini">SEO mensuel<br>35k</div>
+        <div class="card-mini">App mobile<br>200k/mois</div>
+        <div class="card-mini">Formation<br>100k</div>
+      </div>
+      <p>+ commissions incubation, affiliation.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide8">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Modèle inclusif & affiliation</h2>
+      <p><span class="badge">Paiement hebdomadaire possible</span></p>
+      <p><strong>Ambassadeurs :</strong> 20% commission (30k FCFA/vente site ≥150k)</p>
+      <div class="grid-mini">
+        <div class="card-mini"><i class="fas fa-trophy"></i> 5 clients → site gratuit</div>
+        <div class="card-mini"><i class="fas fa-mobile-alt"></i> 10 clients → app offerte</div>
+        <div class="card-mini"><i class="fas fa-code"></i> 15 clients → formation</div>
+        <div class="card-mini"><i class="fas fa-laptop"></i> 240 clients → PC portable</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide9">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Marché cible</h2>
+      <p><strong>Phase 1 – Douala :</strong> écoles privées, églises, PME, commerces, entrepreneurs individuels.</p>
+      <p><strong>Phase 2 :</strong> extension nationale (Yaoundé, etc.)</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide10">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Avantage concurrentiel</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-check"></i> Paiement flexible</li>
+        <li><i class="fas fa-check"></i> Accompagnement 360°</li>
+        <li><i class="fas fa-check"></i> Réseau d'ambassadeurs motivé</li>
+        <li><i class="fas fa-check"></i> Partenariats financement</li>
+        <li><i class="fas fa-check"></i> Équipe jeune et technique</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide11">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Utilisation du prix (1M FCFA)</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-file-signature"></i> Formalisation légale : 200k</li>
+        <li><i class="fas fa-bullhorn"></i> Marketing & communication : 300k</li>
+        <li><i class="fas fa-calendar-alt"></i> 1ʳᵉ session programme : 200k</li>
+        <li><i class="fas fa-laptop-code"></i> Équipements techniques : 200k</li>
+        <li><i class="fas fa-tools"></i> Développement plateforme : 100k</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide12">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Vision 3 ans</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-check-circle"></i> 200+ PME digitalisées</li>
+        <li><i class="fas fa-check-circle"></i> 100 projets incubés</li>
+        <li><i class="fas fa-check-circle"></i> Création d'emplois jeunes développeurs</li>
+        <li><i class="fas fa-check-circle"></i> Expansion dans 3 grandes villes</li>
+        <li><i class="fas fa-check-circle"></i> Réseau national d'ambassadeurs</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide13">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Notre équipe</h2>
+      <div class="team-mini">
+        <div><strong>4 Développeurs</strong> (front/back/CMS)</div>
+        <div><strong>1 Designer UI/UX</strong></div>
+        <div><strong>1 Community Manager</strong> (prospection/réseaux)</div>
+        <div><strong>1 Chef de projet</strong> (pédagogue)</div>
+        <div><strong>1 Conseiller juridique</strong> (Master Droit)</div>
+      </div>
+      <p>8 jeunes passionnés, complémentaires.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide14">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Partenariats stratégiques</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-handshake"></i> <strong>Leadcom</strong> – financement & coaching</li>
+        <li><i class="fas fa-handshake"></i> <strong>Build Together</strong> – immobilier</li>
+        <li><i class="fas fa-handshake"></i> <strong>Services juridiques</strong> – sécurisation</li>
+        <li><i class="fas fa-handshake"></i> <strong>Entreprise d'art oratoire</strong> – formation leadership</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide15">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Réalisations</h2>
+      <p>Site vitrine : <a href="https://digital-switch.vercel.app/" target="_blank" rel="noopener noreferrer">digital-switch.vercel.app</a></p>
+      <p>Premiers clients conquis, preuve de concept validée.</p>
+      <i class="fas fa-check-circle" style="font-size:5rem; color:#00eaff; margin-top:15px;"></i>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide16">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Impact social</h2>
+      <ul class="list-bullet">
+        <li><i class="fas fa-wifi"></i> Inclusion numérique</li>
+        <li><i class="fas fa-briefcase"></i> Création d'emplois directs et indirects</li>
+        <li><i class="fas fa-store"></i> Développement des PME locales</li>
+        <li><i class="fas fa-lightbulb"></i> Émergence de projets innovants</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="slide17">
+  <div class="dual-container">
+    <div class="image-col"></div>
+    <div class="text-col">
+      <h2>Appel à l'action</h2>
+      <p>Nous ne demandons pas un prix, mais un <strong style="color:#00eaff;">partenaire stratégique</strong>.</p>
+      <p style="font-size:2.5rem; margin:15px 0;">1 000 000 FCFA</p>
+      <p>pour structurer, lancer et passer à l'échelle.</p>
+      <p><strong>Digital Switch CM</strong><br>+237 696 49 20 29<br>info@digitalswitchcm.com</p>
+    </div>
+  </div>
+</section>
+
+<div id="progressContainer"><div id="progressBar"></div></div>
+
+<script>
+  // ========== CONFIGURATION ==========
+  const slides = document.querySelectorAll('.section');
+  const flash = document.getElementById('flash');
+  const progressBar = document.getElementById('progressBar');
+  const music = document.getElementById('bgMusic');
+  const pausePlayBtn = document.getElementById('pausePlayBtn');
+  const slideIndicator = document.getElementById('slideIndicator');
+
+  let currentIndex = 0;
+  let isPlaying = true;
+  let autoInterval = null;
+  let timeoutIds = []; // Pour gérer les timeouts si on veut reset
+
+  // Durées personnalisées (en ms) pour chaque slide
+  const durations = [7000, 8000, 8000, 10000, 9000, 8000, 8000, 9000, 7000, 7000, 8000, 7000, 7000, 7000, 6000, 7000, 8000];
+  const totalDuration = durations.reduce((a, b) => a + b, 0);
+  let elapsed = 0;
+  let progressInterval = null;
+
+  // ========== FONCTIONS D'AFFICHAGE ==========
+  function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    updateIndicator(index);
+  }
+
+  function transitionToSlide(index) {
+    flash.style.opacity = 1;
+    setTimeout(() => {
+      showSlide(index);
+      flash.style.opacity = 0;
+    }, 600);
+  }
+
+  function updateIndicator(index) {
+    slideIndicator.innerText = `${(index+1).toString().padStart(2,'0')} / ${slides.length}`;
+  }
+
+  // ========== GESTION DU TIMER ==========
+  function startAutoPlay() {
+    if (autoInterval) clearInterval(autoInterval);
+    // On réinitialise le timer de progression
+    if (progressInterval) clearInterval(progressInterval);
+    
+    // Calcul du temps écoulé basé sur l'index actuel et les durées précédentes
+    let startTime = Date.now();
+    let accumulated = 0;
+    for (let i = 0; i < currentIndex; i++) {
+      accumulated += durations[i];
+    }
+    elapsed = accumulated;
+
+    progressInterval = setInterval(() => {
+      if (isPlaying) {
+        elapsed += 100;
+        const percent = (elapsed / totalDuration) * 100;
+        progressBar.style.width = percent + '%';
+        if (elapsed >= totalDuration) {
+          // Arrivé à la fin, on peut revenir au début ou s'arrêter
+          clearInterval(progressInterval);
+        }
+      }
+    }, 100);
+
+    // Planification des changements de slides
+    scheduleSlides();
+  }
+
+  function scheduleSlides() {
+    // Annuler tous les timeouts précédents
+    timeoutIds.forEach(id => clearTimeout(id));
+    timeoutIds = [];
+
+    let cumulative = 0;
+    for (let i = currentIndex + 1; i < slides.length; i++) {
+      cumulative += durations[i-1];
+      const id = setTimeout(() => {
+        if (isPlaying && i < slides.length) {
+          transitionToSlide(i);
+          currentIndex = i;
+          updateIndicator(i);
+        }
+      }, cumulative);
+      timeoutIds.push(id);
+    }
+  }
+
+  function stopAutoPlay() {
+    if (progressInterval) clearInterval(progressInterval);
+    timeoutIds.forEach(id => clearTimeout(id));
+    timeoutIds = [];
+  }
+
+  // ========== PAUSE / PLAY ==========
+  function togglePause() {
+    isPlaying = !isPlaying;
+    if (isPlaying) {
+      pausePlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+      pausePlayBtn.setAttribute('aria-label', 'Pause');
+      // Relancer la progression et les timeouts à partir de l'instant présent
+      startAutoPlay();
+    } else {
+      pausePlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+      pausePlayBtn.setAttribute('aria-label', 'Lecture');
+      stopAutoPlay();
+      // On laisse la barre figée
+    }
+  }
+
+  // ========== NAVIGATION MANUELLE ==========
+  function nextSlide() {
+    if (currentIndex < slides.length - 1) {
+      // Si on est en lecture, on arrête et on relance après
+      let wasPlaying = isPlaying;
+      if (wasPlaying) {
+        stopAutoPlay();
+      }
+      currentIndex++;
+      transitionToSlide(currentIndex);
+      if (wasPlaying) {
+        startAutoPlay();
+      } else {
+        // Mise à jour de la barre de progression approximative
+        elapsed = 0;
+        for (let i = 0; i < currentIndex; i++) elapsed += durations[i];
+        progressBar.style.width = (elapsed / totalDuration * 100) + '%';
+        updateIndicator(currentIndex);
+      }
+    }
+  }
+
+  function prevSlide() {
+    if (currentIndex > 0) {
+      let wasPlaying = isPlaying;
+      if (wasPlaying) {
+        stopAutoPlay();
+      }
+      currentIndex--;
+      transitionToSlide(currentIndex);
+      if (wasPlaying) {
+        startAutoPlay();
+      } else {
+        elapsed = 0;
+        for (let i = 0; i < currentIndex; i++) elapsed += durations[i];
+        progressBar.style.width = (elapsed / totalDuration * 100) + '%';
+        updateIndicator(currentIndex);
+      }
+    }
+  }
+
+  // ========== INITIALISATION ==========
+  function startPresentation() {
+    document.getElementById('startScreen').style.display = 'none';
+    music.play().catch(() => {});
+    pausePlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    pausePlayBtn.setAttribute('aria-label', 'Pause');
+
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(e => {});
+    }
+
+    currentIndex = 0;
+    isPlaying = true;
+    showSlide(0);
+    startAutoPlay();
+  }
+
+  // ========== GESTION DES PARTICULES ==========
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  function resizeCanvas() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const particlesArray = [];
+  const numberOfParticles = 120; // Plus de particules
+  for (let i = 0; i < numberOfParticles; i++) {
+    particlesArray.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      radius: Math.random() * 4 + 1,
+      dx: (Math.random() - 0.5) * 0.6,
+      dy: (Math.random() - 0.5) * 0.6,
+      alpha: Math.random() * 0.8 + 0.2,
+    });
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, width, height);
+    particlesArray.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 234, 255, ${p.alpha})`;
+      ctx.fill();
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < 0 || p.x > width) p.dx *= -1;
+      if (p.y < 0 || p.y > height) p.dy *= -1;
+    });
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  // ========== BOUTONS ==========
+  window.startPresentation = startPresentation;
+  window.togglePause = togglePause;
+  window.nextSlide = nextSlide;
+  window.prevSlide = prevSlide;
+
+  // Raccourcis clavier
+  window.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Space') {
+      e.preventDefault();
+      togglePause();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prevSlide();
+    }
+  });
+</script>
+
+</body>
+</html>
