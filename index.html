@@ -435,16 +435,16 @@
 </audio>
 
 <div class="control-bar">
-  <button class="control-btn" id="pausePlayBtn" onclick="togglePause()"><i class="fas fa-pause"></i></button>
-  <button class="control-btn" id="muteBtn" onclick="toggleMute()"><i class="fas fa-volume-up"></i></button>
-  <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.15">
-  <button class="control-btn" onclick="nextSlide()"><i class="fas fa-step-forward"></i></button>
+  <button class="control-btn" id="pausePlayBtn" onclick="togglePause()" title="Pause/Reprise (diaporama + musique)"><i class="fas fa-pause"></i></button>
+  <button class="control-btn" id="muteBtn" onclick="toggleMute()" title="Couper/Activer le son"><i class="fas fa-volume-up"></i></button>
+  <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.15" title="Volume">
+  <button class="control-btn" onclick="nextSlide()" title="Slide suivante"><i class="fas fa-step-forward"></i></button>
 </div>
 <div class="slide-indicator" id="slideIndicator">01 / 17</div>
-<button class="nav-arrow" id="arrowLeft" onclick="prevSlide()"><i class="fas fa-chevron-left"></i></button>
-<button class="nav-arrow" id="arrowRight" onclick="nextSlide()"><i class="fas fa-chevron-right"></i></button>
+<button class="nav-arrow" id="arrowLeft" onclick="prevSlide()" title="Slide précédente"><i class="fas fa-chevron-left"></i></button>
+<button class="nav-arrow" id="arrowRight" onclick="nextSlide()" title="Slide suivante"><i class="fas fa-chevron-right"></i></button>
 
-<!-- SLIDES (17) avec slide 9 modifiée : cibles fixes -->
+<!-- SLIDES (17) avec slide 9 : cibles fixes -->
 <section class="section" id="slide1"><div class="dual-container"><div class="image-col"></div><div class="text-col"><h2>Digital Switch CM</h2><p style="font-size:1.8rem;">🔥 Digitalisation flamboyante des PME 🔥</p><p><strong>Mission :</strong> offrir des outils digitaux de dernière génération + accompagnement stratégique.</p><p><span class="badge">8 jeunes experts</span> <span class="badge">Objectif 70% des PME d'ici 2027</span></p></div></div></section>
 <section class="section" id="slide2"><div class="dual-container"><div class="image-col"></div><div class="text-col"><h2>Problème identifié</h2><ul class="list-bullet"><li><i class="fas fa-times-circle"></i> 85% des PME sans présence digitale</li><li><i class="fas fa-times-circle"></i> Écoles, églises, commerces absents du web</li><li><i class="fas fa-times-circle"></i> Jeunes entrepreneurs sans visibilité ni financement</li><li><i class="fas fa-times-circle"></i> Manque de confiance dans le digital</li></ul><p><strong>Conséquence :</strong> des opportunités perdues.</p></div></div></section>
 <section class="section" id="slide3"><div class="dual-container"><div class="image-col"></div><div class="text-col"><h2>Notre solution éclatante</h2><p><span class="badge">🔮 Digitalisation 360°</span> <span class="badge">🚀 Programme incubateur</span> <span class="badge">🤝 Modèle inclusif</span></p><p>Site web, app, SEO, formation, coaching financement.</p></div></div></section>
@@ -496,7 +496,7 @@
   const muteBtn = document.getElementById('muteBtn');
 
   let currentIndex = 0;
-  let isPlaying = true;
+  let isPlaying = true;        // Contrôle le diaporama
   let timeoutIds = [];
   let isMuted = false;
   let previousVolume = 0.15;
@@ -588,16 +588,22 @@
     timeoutIds.forEach(id=>clearTimeout(id));
     timeoutIds=[];
   }
+
+  // ========== PAUSE / PLAY (diaporama + musique) ==========
   function togglePause() {
     isPlaying = !isPlaying;
     if(isPlaying){
       pausePlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
       startAutoPlay();
+      music.play().catch(e => console.log("Lecture audio reprise"));
     } else {
       pausePlayBtn.innerHTML = '<i class="fas fa-play"></i>';
       stopAutoPlay();
+      music.pause();
     }
   }
+
+  // ========== NAVIGATION MANUELLE ==========
   function nextSlide() {
     if(currentIndex < slides.length-1){
       let wasPlaying = isPlaying;
@@ -629,7 +635,7 @@
   function startPresentation() {
     document.getElementById('startScreen').style.display = 'none';
     initAudio();
-    music.play().catch(e=>console.log("auto-play nécessite interaction"));
+    music.play().catch(e=>console.log("Auto-play bloqué, mais l'utilisateur peut cliquer sur lecture"));
     pausePlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
     if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(e=>{});
     currentIndex = 0;
